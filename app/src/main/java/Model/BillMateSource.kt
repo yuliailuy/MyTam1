@@ -4,6 +4,7 @@ import com.example.mytam1.R
 object BillMateSource {
 
     val dummyBill = listOf(
+
         BillMate(
             namaTempat = "Cakery",
             deskripsi = "Cafe and Bakery",
@@ -11,6 +12,7 @@ object BillMateSource {
             jumlahOrang = 5,
             imageRes = R.drawable.cakery
         ),
+
         BillMate(
             namaTempat = "Caflower",
             deskripsi = "Cafe and Flowers",
@@ -18,6 +20,7 @@ object BillMateSource {
             jumlahOrang = 6,
             imageRes = R.drawable.caflower
         ),
+
         BillMate(
             namaTempat = "Bakoffee",
             deskripsi = "Bakery and coffee",
