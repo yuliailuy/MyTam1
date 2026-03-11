@@ -44,7 +44,11 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DaftarBillMateScreen() {
 
-    val listBill = BillMateSource.dummyBill
+    androidx.compose.material3.Surface(
+        color = androidx.compose.ui.graphics.Color(0xFFFFFFFF)
+    )
+
+    {val listBill = BillMateSource.dummyBill
 
     Column(
         modifier = Modifier
@@ -57,7 +61,7 @@ fun DaftarBillMateScreen() {
 
             DetailScreen(bill)
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))}
         }
     }
 }
