@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.mytam1.model.BillMate
 import com.example.mytam1.model.BillMateSource
-import com.example.mytam1.ui.theme.MyTam1Theme
+import com.example.mytam1.ui.theme.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,18 +40,19 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun BillMateScreen() {
-    Surface(color = Color(0xFFFDFDFD)) {
-
+    Surface(color = SoftPinkBackground) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding(),
+            contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             item {
                 Text(
                     text = "Rekomendasi Tempat",
                     style = MaterialTheme.typography.titleLarge,
+                    color = PinkPrimary,
                     fontWeight = FontWeight.Bold
                 )
 
@@ -65,11 +66,12 @@ fun BillMateScreen() {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
                     text = "Daftar Split Bill",
                     style = MaterialTheme.typography.titleLarge,
+                    color = PinkDark,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -86,6 +88,7 @@ fun BillRowItem(bill: BillMate) {
     Card(
         modifier = Modifier.width(160.dp),
         shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = CardSurface),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column {
@@ -102,13 +105,14 @@ fun BillRowItem(bill: BillMate) {
                 Text(
                     text = bill.namaTempat,
                     style = MaterialTheme.typography.titleSmall,
+                    color = Color.Black,
                     fontWeight = FontWeight.Bold
                 )
 
                 Text(
                     text = "Klik untuk split",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = PinkPrimary
                 )
             }
         }
@@ -117,18 +121,16 @@ fun BillRowItem(bill: BillMate) {
 
 @Composable
 fun DetailBillCard(bill: BillMate) {
-
     val hasilSplit = bill.totalTagihan / bill.jumlahOrang
     var isFavorite by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = CardSurface),
         elevation = CardDefaults.cardElevation(6.dp)
     ) {
-
         Column {
-
             Box {
                 Image(
                     painter = painterResource(id = bill.imageRes),
@@ -146,10 +148,7 @@ fun DetailBillCard(bill: BillMate) {
                         .padding(8.dp)
                 ) {
                     Icon(
-                        imageVector = if (isFavorite)
-                            Icons.Filled.Favorite
-                        else
-                            Icons.Outlined.FavoriteBorder,
+                        imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                         contentDescription = null,
                         tint = if (isFavorite) Color.Red else Color.White
                     )
@@ -157,10 +156,10 @@ fun DetailBillCard(bill: BillMate) {
             }
 
             Column(modifier = Modifier.padding(16.dp)) {
-
                 Text(
                     text = bill.namaTempat,
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.Black,
                     fontWeight = FontWeight.Bold
                 )
 
@@ -168,15 +167,22 @@ fun DetailBillCard(bill: BillMate) {
 
                 Text(
                     text = bill.deskripsi,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text("Total: Rp ${bill.totalTagihan}")
-                Text("Orang: ${bill.jumlahOrang}")
+                Text(
+                    text = "Total: Rp ${bill.totalTagihan} | ${bill.jumlahOrang} Orang",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.DarkGray
+                )
+
                 Text(
                     text = "Per Orang: Rp $hasilSplit",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = PinkPrimary,
                     fontWeight = FontWeight.Bold
                 )
 
@@ -186,10 +192,16 @@ fun DetailBillCard(bill: BillMate) {
                     onClick = { },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF6C63FF)
-                    )
+                        containerColor = PinkPrimary,
+                        contentColor = OnPrimaryText
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Split Sekarang", fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Split Sekarang",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
