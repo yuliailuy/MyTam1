@@ -4,15 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,9 +13,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.navigation.*
+import androidx.navigation.compose.*
+import kotlinx.coroutines.delay
 import com.example.mytam1.model.BillMate
 import com.example.mytam1.model.BillMateSource
-import com.example.mytam1.ui.theme.*
+import com.example.mytam1.ui.theme.MyTam1Theme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,177 +30,206 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyTam1Theme {
-                BillMateScreen()
+                AppNavigation()
             }
         }
     }
 }
 
 @Composable
-fun BillMateScreen() {
-    Surface(color = SoftPinkBackground) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding(),
-            contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                Text(
-                    text = "Rekomendasi Tempat",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = PinkPrimary,
-                    fontWeight = FontWeight.Bold
-                )
+fun AppNavigation() {
+    val navController = rememberNavController()
 
-                Spacer(modifier = Modifier.height(12.dp))
+    NavHost(navController, startDestination = "home") {
+        composable("home") { HomeScreen(navController) }
 
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(BillMateSource.dummyBill) { bill ->
-                        BillRowItem(bill)
+        composable("detail/{index}") { backStack ->
+            val index = backStack.arguments?.getString("index")?.toInt() ?: 0
+            val data = BillMateSource.dummyBill[index]
+            DetailScreen(data, navController)
+        }
+    }
+}
+
+@Composable
+fun HomeScreen(navController: NavController) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+
+        item {
+            Text("Rekomendasi Tempat", fontWeight = FontWeight.Bold)
+
+            Spacer(Modifier.height(12.dp))
+
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                itemsIndexed(BillMateSource.dummyBill) { index, item ->
+                    Card(
+                        modifier = Modifier
+                            .width(160.dp)
+                            .clickable {
+                                navController.navigate("detail/$index")
+                            },
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column {
+                            Image(
+                                painterResource(item.imageRes),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                            Column(Modifier.padding(8.dp)) {
+                                Text(item.namaTempat, fontWeight = FontWeight.Bold)
+                                Text("Klik untuk split", color = Color.Gray)
+                            }
+                        }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = "Daftar Split Bill",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = PinkDark,
-                    fontWeight = FontWeight.Bold
-                )
             }
 
-            items(BillMateSource.dummyBill) { bill ->
-                DetailBillCard(bill)
+            Spacer(Modifier.height(24.dp))
+
+            Text("Daftar Split Bill", fontWeight = FontWeight.Bold)
+        }
+
+        itemsIndexed(BillMateSource.dummyBill) { index, item ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        navController.navigate("detail/$index")
+                    },
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column {
+                    Image(
+                        painterResource(item.imageRes),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Column(Modifier.padding(16.dp)) {
+                        Text(item.namaTempat, fontWeight = FontWeight.Bold)
+                        Text(item.deskripsi)
+
+                        Spacer(Modifier.height(12.dp))
+
+                        Button(
+                            onClick = {},
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Split Sekarang")
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun BillRowItem(bill: BillMate) {
-    Card(
-        modifier = Modifier.width(160.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = CardSurface),
-        elevation = CardDefaults.cardElevation(4.dp)
+fun DetailScreen(data: BillMate, navController: NavController) {
+
+    var isProcessing by remember { mutableStateOf(false) }
+    var showSuccess by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp)
     ) {
+
         Column {
+
             Image(
-                painter = painterResource(id = bill.imageRes),
-                contentDescription = bill.namaTempat,
+                painterResource(data.imageRes),
+                contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp),
+                    .height(250.dp),
                 contentScale = ContentScale.Crop
             )
 
-            Column(modifier = Modifier.padding(8.dp)) {
-                Text(
-                    text = bill.namaTempat,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold
-                )
+            Spacer(Modifier.height(16.dp))
 
+            Text(data.namaTempat, fontWeight = FontWeight.Bold)
+            Text(data.deskripsi)
+
+            Spacer(Modifier.height(20.dp))
+
+            Button(
+                onClick = {
+                    isProcessing = true
+                },
+                enabled = !isProcessing,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isProcessing) Color.Gray else MaterialTheme.colorScheme.primary
+                )
+            ) {
+                if (isProcessing) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Memproses...")
+                    }
+                } else {
+                    Text("Split Sekarang")
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Button(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Kembali")
+            }
+        }
+
+        if (showSuccess) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .background(
+                        color = Color(0xFF2E2E2E),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(14.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    text = "Klik untuk split",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = PinkPrimary
+                    "Split bill berhasil!",
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
-    }
-}
 
-@Composable
-fun DetailBillCard(bill: BillMate) {
-    val hasilSplit = bill.totalTagihan / bill.jumlahOrang
-    var isFavorite by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = CardSurface),
-        elevation = CardDefaults.cardElevation(6.dp)
-    ) {
-        Column {
-            Box {
-                Image(
-                    painter = painterResource(id = bill.imageRes),
-                    contentDescription = bill.namaTempat,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    contentScale = ContentScale.Crop
-                )
-
-                IconButton(
-                    onClick = { isFavorite = !isFavorite },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                ) {
-                    Icon(
-                        imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                        contentDescription = null,
-                        tint = if (isFavorite) Color.Red else Color.White
-                    )
-                }
-            }
-
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = bill.namaTempat,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = bill.deskripsi,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Total: Rp ${bill.totalTagihan} | ${bill.jumlahOrang} Orang",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.DarkGray
-                )
-
-                Text(
-                    text = "Per Orang: Rp $hasilSplit",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = PinkPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(
-                    onClick = { },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PinkPrimary,
-                        contentColor = OnPrimaryText
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = "Split Sekarang",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+        if (isProcessing) {
+            LaunchedEffect(Unit) {
+                delay(1500)
+                isProcessing = false
+                showSuccess = true
+                delay(1500)
+                showSuccess = false
             }
         }
     }
